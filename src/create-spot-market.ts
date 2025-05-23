@@ -11,6 +11,10 @@ import {
 } from "@drift-labs/sdk";
 import * as fs from "fs";
 import * as path from "path";
+import * as os from "os";
+import * as dotenv from "dotenv";
+
+dotenv.config();
 
 async function main() {
   // Connect to devnet
@@ -18,7 +22,7 @@ async function main() {
 
   // Load the keypair from file
   const keypairData = JSON.parse(
-    fs.readFileSync(path.join(__dirname, "../keypair.json"), "utf-8")
+    fs.readFileSync(path.join(os.homedir(), process.env.ADMIN_PRIVATE_KEY_PATH!), "utf-8")
   );
   const keypair = Keypair.fromSecretKey(new Uint8Array(keypairData));
   
@@ -42,7 +46,7 @@ async function main() {
   const adminClient = new AdminClient({
     connection,
     wallet,
-    programID: new PublicKey("EpNqZ7KyCuW9yJb7hNAvqchB6S5oSCNpQhpmnNZDYwUJ"),
+    programID: new PublicKey(process.env.PROGRAM_ID!),
     opts: {
       commitment: "confirmed",
     },
@@ -59,7 +63,7 @@ async function main() {
     console.log("USDC spot market index:", marketIndex);
 
     // USDC mint address on devnet
-    const usdcMint = new PublicKey("3uYC2QUS5H8tcRS4QyhrqGnTpFYXymbvyGCB3PRTid3x");
+    const usdcMint = new PublicKey(process.env.USDC_MINT!);
 
     // For USDC spot market, we must use default public key as oracle when using QuoteAsset
     const usdcOracle = PublicKey.default;
