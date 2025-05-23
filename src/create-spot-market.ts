@@ -21,6 +21,8 @@ async function main() {
     fs.readFileSync(path.join(__dirname, "../keypair.json"), "utf-8")
   );
   const keypair = Keypair.fromSecretKey(new Uint8Array(keypairData));
+  
+  console.log("Your wallet public key:", keypair.publicKey.toBase58());
 
   const wallet = {
     publicKey: keypair.publicKey,
@@ -57,7 +59,7 @@ async function main() {
     console.log("USDC spot market index:", marketIndex);
 
     // USDC mint address on devnet
-    const usdcMint = new PublicKey("4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU");
+    const usdcMint = new PublicKey("3uYC2QUS5H8tcRS4QyhrqGnTpFYXymbvyGCB3PRTid3x");
 
     // For USDC spot market, we must use default public key as oracle when using QuoteAsset
     const usdcOracle = PublicKey.default;
@@ -90,7 +92,7 @@ async function main() {
       PRICE_PRECISION.divn(100000), // orderTickSize
       BASE_PRECISION.divn(10000), // orderStepSize
       0, // ifTotalFactor
-      "U", // name
+      "USDC spot market", // name
       marketIndex // marketIndex
     );
 
@@ -106,7 +108,6 @@ async function main() {
     try {
       const txSig = await connection.sendTransaction(tx, [keypair], {
         skipPreflight: false, // Enable preflight checks
-        preflightCommitment: "confirmed",
       });
       console.log("Transaction sent:", txSig);
 
