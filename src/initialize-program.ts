@@ -20,7 +20,7 @@ async function main() {
 
   // Load the keypair from file
   const keypairData = JSON.parse(
-    fs.readFileSync(path.join(os.homedir(), ".config/solana/wba-wallet.json"), "utf-8")
+    fs.readFileSync(path.join(os.homedir(), process.env.ADMIN_PRIVATE_KEY_PATH!), "utf-8")
   );
   const keypair = Keypair.fromSecretKey(new Uint8Array(keypairData));
   
