@@ -9,7 +9,6 @@ import {
   ONE,
   ZERO,
   PEG_PRECISION,
-  getPerpMarketPublicKey,
 } from "@drift-labs/sdk";
 import * as fs from "fs";
 import * as path from "path";
