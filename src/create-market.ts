@@ -12,6 +12,11 @@ import {
 } from "@drift-labs/sdk";
 import * as fs from "fs";
 import * as path from "path";
+import * as os from "os";
+import * as dotenv from "dotenv";
+
+// Load environment variables
+dotenv.config();
 
 async function main() {
   // Connect to devnet
@@ -19,9 +24,11 @@ async function main() {
 
   // Load the keypair from file
   const keypairData = JSON.parse(
-    fs.readFileSync(path.join(__dirname, "../keypair.json"), "utf-8")
+    fs.readFileSync(path.join(os.homedir(), process.env.ADMIN_PRIVATE_KEY_PATH!), "utf-8")
   );
   const keypair = Keypair.fromSecretKey(new Uint8Array(keypairData));
+  
+  console.log("Your wallet public key:", keypair.publicKey.toBase58());
 
   const wallet = {
     publicKey: keypair.publicKey,
@@ -37,11 +44,14 @@ async function main() {
     },
   };
 
+  // Program ID
+  const programId = new PublicKey(process.env.PROGRAM_ID!);
+
   // Initialize AdminClient
   const adminClient = new AdminClient({
     connection,
     wallet,
-    programID: new PublicKey("EpNqZ7KyCuW9yJb7hNAvqchB6S5oSCNpQhpmnNZDYwUJ"), // Andy's Drift program ID on devnet
+    programID: programId,
     opts: {
       commitment: "confirmed",
     },
@@ -55,7 +65,7 @@ async function main() {
   );
   if (!stateAccount) {
     throw new Error(
-      "State account does not exist at: " + statePublicKey.toBase58() //need to init adminClient if does not exist
+      "State account does not exist at: " + statePublicKey.toBase58() + ". Please run initialize-program.ts first."
     );
   }
 
@@ -65,10 +75,9 @@ async function main() {
   try {
     const state = adminClient.getStateAccount();
     
-    // Get the current number of markets. This caused the weird state error because marketIndex was 100, but the number of markets in state was 0.
+    // Get the current number of markets
     const marketIndex = state.numberOfMarkets;
     console.log("Current number of markets:", marketIndex);
-
 
     // Create a perp market
     const priceOracle = new PublicKey(
@@ -117,15 +126,21 @@ async function main() {
     tx.feePayer = keypair.publicKey;
     tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
     console.log("Transaction built:");
+
+    // Sign the transaction with all necessary signers
+    tx.sign(keypair);
+    
     // Send the transaction
     console.log("Sending transaction...");
-    const txSig = await connection.sendTransaction(tx, [keypair]);
+    const txSig = await connection.sendTransaction(tx, [keypair], {
+      skipPreflight: false,
+      preflightCommitment: "confirmed",
+    });
 
     // Wait for confirmation
     console.log("Waiting for confirmation...");
     await adminClient.connection.confirmTransaction(txSig);
     console.log("Transaction confirmed!", txSig);
-
 
     // Convert to prediction market
     const predictionIx = await adminClient.getInitializePredictionMarketIx(
